@@ -10,6 +10,7 @@ load_dotenv()
 from services.auth.login_wall import render_login_wall
 from services.state.session_defaults import initial_session_defaults
 from services.config.workout_config import EXERCISE_OPTIONS
+from services.config.webrtc_config import get_rtc_configuration, MEDIA_STREAM_CONSTRAINTS
 from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_styles
 from services.persistence.exercise_repository import init_db
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
@@ -215,11 +216,8 @@ def main():
             key="exercise-analysis",
             mode=WebRtcMode.SENDRECV,
             video_processor_factory=VideoProcessorClass,
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-            media_stream_constraints={
-                "video": True,
-                "audio": False
-            },
+            rtc_configuration=get_rtc_configuration(),
+            media_stream_constraints=MEDIA_STREAM_CONSTRAINTS,
             async_processing=True
         )
 
@@ -228,6 +226,17 @@ def main():
         if context.state.playing:
             time.sleep(0.25)
             st.rerun()
+        else:
+            st.caption("💡 Click **START** above and allow camera permissions in your browser. Connection establishes in a few seconds.")
+
+        with st.expander("ℹ️ Camera troubleshooting & tips", expanded=False):
+            st.markdown(
+                """
+                - **Camera Permissions:** Ensure camera access is allowed for this site in your browser (check the camera/lock icon in the address bar).
+                - **Webcam in Use:** Ensure no other app (Zoom, Teams, Skype, or other browser tabs) is currently using your webcam.
+                - **Firewalls / Restrictive Networks:** The app automatically uses STUN and TURN relays to traverse firewalls and NAT.
+                """
+            )
 
         inject_webrtc_styles()
 
