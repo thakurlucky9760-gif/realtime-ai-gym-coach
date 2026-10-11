@@ -10,7 +10,7 @@ load_dotenv()
 from services.auth.login_wall import render_login_wall
 from services.state.session_defaults import initial_session_defaults
 from services.config.workout_config import EXERCISE_OPTIONS
-from services.config.webrtc_config import get_rtc_configuration, MEDIA_STREAM_CONSTRAINTS
+from services.config.webrtc_config import get_rtc_configuration, is_turn_configured, MEDIA_STREAM_CONSTRAINTS
 from services.ui.style_loader import load_css, inject_local_font, inject_webrtc_styles
 from services.persistence.exercise_repository import init_db
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
@@ -228,6 +228,41 @@ def main():
             st.rerun()
         else:
             st.caption("💡 Click **START** above and allow camera permissions in your browser. Connection establishes in a few seconds.")
+
+        if not is_turn_configured() and not context.state.playing:
+            with st.expander("🔑 Enable Camera for Streamlit Cloud (1-minute setup)", expanded=False):
+                st.markdown(
+                    """
+                    **Why does the camera take longer to connect on Streamlit Cloud?**
+                    Streamlit Cloud runs inside a cloud container with a strict firewall that blocks direct peer-to-peer WebRTC video packets. To stream your webcam reliably through the cloud firewall, WebRTC requires a free **TURN relay**.
+
+                    **Choose any 1 free option below (takes 1 minute, no credit card required):**
+
+                    * **Option 1 — Metered.ca (Recommended, 50 GB free/mo):**
+                      1. Go to [metered.ca](https://www.metered.ca) and sign up for a free account.
+                      2. Under your dashboard, copy your **App Domain** and **API Key**.
+                      3. In your Streamlit Cloud Dashboard (click **Manage app** at the bottom-right ➔ **Settings** ➔ **Secrets**), add:
+                         ```toml
+                         METERED_DOMAIN = "your-app-name"
+                         METERED_API_KEY = "your_api_key"
+                         ```
+                    
+                    * **Option 2 — Cloudflare Realtime TURN (1,000 GB free/mo):**
+                      1. Go to Cloudflare Dashboard ➔ **Calls** ➔ **TURN Keys** ➔ Create a key.
+                      2. In Streamlit Cloud Secrets, add:
+                         ```toml
+                         CLOUDFLARE_TURN_KEY_ID = "your_key_id"
+                         CLOUDFLARE_TURN_KEY_API_TOKEN = "your_token"
+                         ```
+
+                    * **Option 3 — Twilio Network Traversal (Free Trial):**
+                      1. In Streamlit Cloud Secrets, add:
+                         ```toml
+                         TWILIO_ACCOUNT_SID = "your_sid"
+                         TWILIO_AUTH_TOKEN = "your_token"
+                         ```
+                    """
+                )
 
         with st.expander("ℹ️ Camera troubleshooting & tips", expanded=False):
             st.markdown(
